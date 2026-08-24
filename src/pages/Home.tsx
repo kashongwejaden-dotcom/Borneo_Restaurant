@@ -1,12 +1,21 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bike, Clock, Flame, MapPin, Percent, Plus, Star, UtensilsCrossed, Wallet } from "lucide-react";
+import { ArrowRight, Bike, Clock, Flame, LocateFixed, MapPin, Percent, Plus, Search, Star, UtensilsCrossed, Wallet } from "lucide-react";
 import { IMG, RESTAURANT } from "../lib/seed";
 import { money, cn } from "../lib/utils";
 import { useStore } from "../lib/store";
 import { Button, Badge } from "../components/ui";
 import { OrderTicker, Reveal, SectionHead, TagChip, Footer } from "../components/shared";
+
+const REVIEWS = [
+  { name: "Keza N.", time: "2 weeks ago", stars: 5, text: "The rendang is dangerously good — ordered direct and it was ready before I parked. Not a single franc wasted on app fees." },
+  { name: "Patrick H.", time: "1 month ago", stars: 5, text: "Best sate ayam in Kigali, full stop. The peanut sauce should be studied by scientists." },
+  { name: "Aline U.", time: "3 weeks ago", stars: 5, text: "Booked a table for six in about ten seconds. They remembered the birthday note AND the cake candle." },
+  { name: "Jean Bosco", time: "2 months ago", stars: 4, text: "Ikan bakar with dabu-dabu on a Friday night is the correct answer to everything. One star withheld until they add a second location." },
+  { name: "Diane M.", time: "1 week ago", stars: 5, text: "The live menu is honest — when the lumpia ran out, it said so. Respect. (Restock the lumpia.)" },
+  { name: "Samuel T.", time: "3 months ago", stars: 5, text: "Ordered delivery, tracked the ticket live, tip went 100% to the staff. This is how food apps should work." },
+];
 
 export default function Home() {
   const navigate = useNavigate();
@@ -22,6 +31,27 @@ export default function Home() {
   );
 
   const slots = ["12:00", "12:30", "13:00", "18:00", "18:30", "19:00", "19:30", "20:00"];
+
+  /* ---- "find us near you" — search the menu + geolocation ---- */
+  const [query, setQuery] = useState("");
+  const [geo, setGeo] = useState<{ km: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const locate = () => {
+    if (!("geolocation" in navigator)) return toast("Geolocation isn't supported in this browser.", "error");
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ km: kmBetween(pos.coords.latitude, pos.coords.longitude, -1.9351, 30.0821) });
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        toast("Couldn't read your location — no worries, we're at 18 KG 4 Ave.", "error");
+      },
+      { timeout: 8000 },
+    );
+  };
 
   return (
     <div className="relative">
@@ -68,6 +98,60 @@ export default function Home() {
                   <UtensilsCrossed size={17} /> Book a table
                 </Button>
               </div>
+            </Reveal>
+            <Reveal delay={0.28}>
+              <div className="mt-7 flex flex-wrap items-center gap-2.5 max-w-xl">
+                <form
+                  className="flex-1 min-w-[250px]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    navigate(query.trim() ? `/menu?q=${encodeURIComponent(query.trim())}` : "/menu");
+                  }}
+                  role="search"
+                >
+                  <div className="relative">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" aria-hidden />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search the menu — rendang, sate, cendol…"
+                      aria-label="Search the menu"
+                      className="w-full h-[52px] pl-11 pr-[92px] rounded-xl border border-stone-300 dark:border-stone-700 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm text-sm font-semibold placeholder:text-stone-400 focus:border-ember-500 focus:ring-2 focus:ring-ember-500/20 outline-none transition-all"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 h-10 px-4 rounded-[10px] ember-gradient text-white text-[13px] font-bold hover:brightness-105 transition-all"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </form>
+                <button
+                  onClick={locate}
+                  className={cn(
+                    "h-[52px] px-4 rounded-xl border flex items-center gap-2 text-[13px] font-bold transition-colors",
+                    geo
+                      ? "border-emerald-400/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5"
+                      : "border-stone-300 dark:border-stone-700 text-stone-500 dark:text-stone-400 hover:border-ember-500 hover:text-ember-600 dark:hover:text-ember-400",
+                  )}
+                >
+                  <LocateFixed size={15} className={locating ? "animate-spin" : ""} />
+                  {locating
+                    ? "Locating…"
+                    : geo
+                      ? `${geo.km < 1 ? Math.round(geo.km * 1000) + " m" : geo.km.toFixed(1) + " km"} away`
+                      : "Near me"}
+                </button>
+              </div>
+              {geo && (
+                <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-2.5 text-[12.5px] font-semibold text-stone-500 dark:text-stone-400">
+                  {geo.km <= 8 ? (
+                    <>You're <span className="text-emerald-600 dark:text-emerald-400">inside our delivery radius</span> — order straight to your door.</>
+                  ) : (
+                    <>You're a little far for our riders — but <span className="text-ember-600 dark:text-ember-400">pickup is always open</span>.</>
+                  )}
+                </motion.p>
+              )}
             </Reveal>
             <Reveal delay={0.32}>
               <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[13px] font-semibold text-stone-500 dark:text-stone-400">
@@ -227,6 +311,38 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ================= WHAT KIGALI SAYS ================= */}
+      <section className="mt-20 sm:mt-28 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <SectionHead
+            kicker={`${RESTAURANT.rating} ★ on Google · ${RESTAURANT.reviews} reviews`}
+            title="What Kigali says after the first bite"
+          />
+        </div>
+        <div className="relative" role="region" aria-label="Customer reviews">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-paper dark:from-stone-950 to-transparent z-10" aria-hidden />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-paper dark:from-stone-950 to-transparent z-10" aria-hidden />
+          <div className="flex gap-5 w-max animate-marquee hover:[animation-play-state:paused] py-2" style={{ animationDuration: "55s" }}>
+            {[...REVIEWS, ...REVIEWS].map((r, i) => (
+              <figure key={i} className="w-[320px] shrink-0 rounded-2xl border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-card p-5 transition-shadow duration-300 hover:shadow-lift">
+                <div className="flex items-center justify-between">
+                  <Stars n={r.stars} />
+                  <span className="text-[11px] font-semibold text-stone-400">{r.time}</span>
+                </div>
+                <blockquote className="mt-3 text-[14px] leading-relaxed text-stone-600 dark:text-stone-300">“{r.text}”</blockquote>
+                <figcaption className="mt-4 flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-full ember-gradient text-white grid place-items-center text-[12px] font-bold">{r.name[0]}</span>
+                  <div className="leading-tight">
+                    <p className="text-[13px] font-bold">{r.name}</p>
+                    <p className="text-[11px] text-stone-400">Google review · verified order</p>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ================= RESERVE TEASER ================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20 sm:mt-28">
         <Reveal>
@@ -292,5 +408,26 @@ function PartnerButton() {
     <Button size="lg" className="shrink-0" onClick={() => openAuth("partner")}>
       See the dashboard <ArrowRight size={17} />
     </Button>
+  );
+}
+
+/** Haversine distance in km — used to tell diners if they're inside the delivery radius. */
+function kmBetween(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function Stars({ n }: { n: number }) {
+  return (
+    <span className="flex gap-0.5" aria-label={`${n} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} size={13} className={i <= n ? "text-ember-500 fill-ember-500" : "text-stone-300 dark:text-stone-700"} />
+      ))}
+    </span>
   );
 }

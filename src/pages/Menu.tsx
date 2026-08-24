@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, Clock, Flame, MapPin, Plus, Star, X } from "lucide-react";
+import { AlertTriangle, Clock, Flame, MapPin, Plus, Search, SearchX, Star, X } from "lucide-react";
 import type { MenuItem } from "../lib/types";
 import { RESTAURANT } from "../lib/seed";
 import { cn, money, useFakeLoad } from "../lib/utils";
@@ -15,6 +16,11 @@ export default function MenuPage() {
   const cartCount = useCartCount();
   const promo = useLivePromo();
   const loading = useFakeLoad(700);
+
+  const [params, setParams] = useSearchParams();
+  const q = (params.get("q") ?? "").trim().toLowerCase();
+  const setQuery = (v: string) => setParams(v.trim() ? { q: v.trim() } : {}, { replace: true });
+
   const [activeCat, setActiveCat] = useState(categories[0]?.id);
   const [selected, setSelected] = useState<{ item: MenuItem; catId: string } | null>(null);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -31,7 +37,7 @@ export default function MenuPage() {
     );
     Object.values(sectionRefs.current).forEach((el) => el && obs.observe(el));
     return () => obs.disconnect();
-  }, [categories.length]);
+  }, [categories.length, q]);
 
   const jump = (id: string) => {
     sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -41,6 +47,20 @@ export default function MenuPage() {
     () => categories.reduce((n, c) => n + c.items.filter((i) => !i.available).length, 0),
     [categories],
   );
+
+  const results = useMemo(
+    () =>
+      q
+        ? categories.flatMap((c) =>
+            c.items
+              .filter((i) => (i.name + " " + i.desc).toLowerCase().includes(q))
+              .map((item) => ({ item, cat: c.name })),
+          )
+        : [],
+    [categories, q],
+  );
+
+  const openItem = (item: MenuItem, catId: string) => item.available && setSelected({ item, catId });
 
   return (
     <div className="min-h-screen">
@@ -96,121 +116,122 @@ export default function MenuPage() {
         </div>
       </section>
 
-      {/* sticky category nav */}
+      {/* sticky search + category nav */}
       <div className="sticky top-[72px] z-40 bg-paper/85 dark:bg-stone-950/85 backdrop-blur-md border-b border-stone-200/70 dark:border-stone-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-2 overflow-x-auto no-scrollbar py-3" role="tablist" aria-label="Menu categories">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              role="tab"
-              aria-selected={activeCat === c.id}
-              onClick={() => jump(c.id)}
-              className={cn(
-                "shrink-0 px-4 h-10 rounded-full text-[13.5px] font-bold transition-all duration-200",
-                activeCat === c.id
-                  ? "bg-ink text-paper dark:bg-stone-100 dark:text-ink shadow-sm"
-                  : "bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-ink dark:hover:text-stone-100 hover:border-ember-400",
-              )}
-            >
-              {c.name}
-            </button>
-          ))}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-3 py-3">
+          <div className="relative shrink-0">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" aria-hidden />
+            <input
+              value={q}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search dishes…"
+              aria-label="Search the menu"
+              className="w-[150px] sm:w-[220px] h-10 pl-9 pr-8 rounded-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-[13px] font-semibold placeholder:text-stone-400 focus:border-ember-500 focus:ring-2 focus:ring-ember-500/20 outline-none transition-all"
+            />
+            {q && (
+              <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 grid place-items-center rounded-full bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600">
+                <X size={11} />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1" role="tablist" aria-label="Menu categories">
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                role="tab"
+                aria-selected={activeCat === c.id}
+                onClick={() => { setQuery(""); setTimeout(() => jump(c.id), 30); }}
+                className={cn(
+                  "shrink-0 px-4 h-10 rounded-full text-[13.5px] font-bold transition-all duration-200",
+                  activeCat === c.id && !q
+                    ? "bg-ink text-paper dark:bg-stone-100 dark:text-ink shadow-sm"
+                    : "bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-ink dark:hover:text-stone-100 hover:border-ember-400",
+                )}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* sections */}
+      {/* sections / search results */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 space-y-16">
-        {categories.map((cat) => (
-          <section
-            key={cat.id}
-            id={cat.id}
-            ref={(el) => { sectionRefs.current[cat.id] = el; }}
-            className="scroll-mt-36"
-          >
-            <div className="flex items-baseline justify-between gap-4 mb-6">
+        {q ? (
+          <motion.section key={q} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
               <div>
-                <h2 className="font-display text-3xl font-bold">{cat.name}</h2>
-                {cat.note && <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">{cat.note}</p>}
+                <h2 className="font-display text-3xl font-bold">
+                  {results.length} dish{results.length === 1 ? "" : "es"} for “{q}”
+                </h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Filtered live against tonight's menu.</p>
               </div>
-              <span className="font-mono text-[12px] text-stone-400">{cat.items.length} items</span>
+              <Button variant="outline" size="sm" onClick={() => setQuery("")}>
+                <X size={13} /> Clear search
+              </Button>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {loading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden">
-                      <Skeleton className="h-[168px] rounded-none" />
-                      <div className="p-5 space-y-3">
-                        <Skeleton className="h-5 w-2/3" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-9 w-full" />
-                      </div>
-                    </div>
-                  ))
-                : cat.items.map((item, i) => (
-                    <motion.article
-                      key={item.id}
-                      initial={{ opacity: 0, y: 22 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-40px" }}
-                      transition={{ duration: 0.5, delay: (i % 3) * 0.07 }}
-                      whileHover={{ y: -4 }}
-                      className={cn(
-                        "group rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-card overflow-hidden transition-shadow duration-300 hover:shadow-lift",
-                        !item.available && "opacity-60",
-                      )}
+            {results.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-stone-300 dark:border-stone-700 py-16 px-6 text-center">
+                <SearchX size={26} className="mx-auto text-stone-400 mb-3" />
+                <p className="font-display text-xl font-bold">Nothing on the pass matches that</p>
+                <p className="text-sm text-stone-500 mt-2">Try one of the house classics instead:</p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                  {["rendang", "nasi goreng", "sate", "cendol", "lumpia"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setQuery(s)}
+                      className="px-4 py-2 rounded-full border border-stone-300 dark:border-stone-700 text-[13px] font-bold text-stone-500 hover:border-ember-500 hover:text-ember-600 dark:hover:text-ember-400 transition-colors"
                     >
-                      <button
-                        className="w-full text-left disabled:cursor-not-allowed"
-                        onClick={() => item.available && setSelected({ item, catId: cat.id })}
-                        disabled={!item.available}
-                        aria-label={`${item.name}, ${money(item.price)}${item.available ? "" : ", unavailable"}`}
-                      >
-                        <div className="relative h-[168px] overflow-hidden">
-                          <img
-                            src={item.img}
-                            alt={item.name}
-                            loading="lazy"
-                            className={cn("w-full h-full object-cover transition-transform duration-700 group-hover:scale-105", !item.available && "grayscale")}
-                          />
-                          <div className="absolute top-3 left-3 flex gap-1.5">
-                            {item.tags.map((t) => <TagChip key={t} tag={t} short />)}
-                          </div>
-                          {!item.available && (
-                            <span className="absolute top-3 right-3 bg-stone-900/90 text-paper text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
-                              86'd today
-                            </span>
-                          )}
-                          {item.available && item.stock < 10 && (
-                            <span className="absolute bottom-3 left-3 bg-amber-500/95 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
-                              Only {item.stock} left
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-5">
-                          <div className="flex items-start justify-between gap-3">
-                            <h3 className="font-display text-[18px] font-bold leading-tight">{item.name}</h3>
-                            <span className="font-mono text-[13px] font-bold text-ember-600 dark:text-ember-400 whitespace-nowrap">{money(item.price)}</span>
-                          </div>
-                          <p className="mt-1.5 text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed">{item.desc}</p>
-                          <div className="mt-4 flex items-center justify-between">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
-                              {item.modifiers.length > 0 ? `${item.modifiers.length} option groups` : "No options"}
-                            </span>
-                            {item.available && (
-                              <span className="w-9 h-9 grid place-items-center rounded-full ember-gradient text-white opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 shadow-lift">
-                                <Plus size={16} />
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    </motion.article>
+                      {s}
+                    </button>
                   ))}
-            </div>
-          </section>
-        ))}
-        {unavailableCount > 0 && (
+                </div>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {results.map(({ item, cat }, i) => (
+                  <ItemCard key={item.id} item={item} index={i} onOpen={() => openItem(item, "")} badge={cat} />
+                ))}
+              </div>
+            )}
+          </motion.section>
+        ) : (
+          categories.map((cat) => (
+            <section
+              key={cat.id}
+              id={cat.id}
+              ref={(el) => { sectionRefs.current[cat.id] = el; }}
+              className="scroll-mt-36"
+            >
+              <div className="flex items-baseline justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="font-display text-3xl font-bold">{cat.name}</h2>
+                  {cat.note && <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">{cat.note}</p>}
+                </div>
+                <span className="font-mono text-[12px] text-stone-400">{cat.items.length} items</span>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {loading
+                  ? Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+                        <Skeleton className="h-[168px] rounded-none" />
+                        <div className="p-5 space-y-3">
+                          <Skeleton className="h-5 w-2/3" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-9 w-full" />
+                        </div>
+                      </div>
+                    ))
+                  : cat.items.map((item, i) => (
+                      <ItemCard key={item.id} item={item} index={i} onOpen={() => openItem(item, cat.id)} />
+                    ))}
+              </div>
+            </section>
+          ))
+        )}
+        {!q && unavailableCount > 0 && (
           <p className="text-center text-[13px] text-stone-400 -mt-6">
             {unavailableCount} item{unavailableCount > 1 ? "s" : ""} 86'd today — back tomorrow, insha'Allah.
           </p>
@@ -220,6 +241,75 @@ export default function MenuPage() {
       <ItemModal selected={selected} onClose={() => setSelected(null)} />
       <Footer />
     </div>
+  );
+}
+
+/* ---------------- menu item card ---------------- */
+
+function ItemCard({ item, index, onOpen, badge }: { item: MenuItem; index: number; onOpen: () => void; badge?: string }) {
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: (index % 3) * 0.07 }}
+      whileHover={{ y: -4 }}
+      className={cn(
+        "group rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-card overflow-hidden transition-shadow duration-300 hover:shadow-lift",
+        !item.available && "opacity-60",
+      )}
+    >
+      <button
+        className="w-full text-left disabled:cursor-not-allowed"
+        onClick={onOpen}
+        disabled={!item.available}
+        aria-label={`${item.name}, ${money(item.price)}${item.available ? "" : ", unavailable"}`}
+      >
+        <div className="relative h-[168px] overflow-hidden">
+          <img
+            src={item.img}
+            alt={item.name}
+            loading="lazy"
+            className={cn("w-full h-full object-cover transition-transform duration-700 group-hover:scale-105", !item.available && "grayscale")}
+          />
+          <div className="absolute top-3 left-3 flex gap-1.5">
+            {item.tags.map((t) => <TagChip key={t} tag={t} short />)}
+          </div>
+          {badge && (
+            <span className="absolute bottom-3 left-3 bg-ink/85 backdrop-blur-sm text-paper text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+              {badge}
+            </span>
+          )}
+          {!item.available && (
+            <span className="absolute top-3 right-3 bg-stone-900/90 text-paper text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+              86'd today
+            </span>
+          )}
+          {item.available && item.stock < 10 && (
+            <span className="absolute bottom-3 right-3 bg-amber-500/95 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+              Only {item.stock} left
+            </span>
+          )}
+        </div>
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-display text-[18px] font-bold leading-tight">{item.name}</h3>
+            <span className="font-mono text-[13px] font-bold text-ember-600 dark:text-ember-400 whitespace-nowrap">{money(item.price)}</span>
+          </div>
+          <p className="mt-1.5 text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed">{item.desc}</p>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
+              {item.modifiers.length > 0 ? `${item.modifiers.length} option groups` : "No options"}
+            </span>
+            {item.available && (
+              <span className="w-9 h-9 grid place-items-center rounded-full ember-gradient text-white opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 shadow-lift">
+                <Plus size={16} />
+              </span>
+            )}
+          </div>
+        </div>
+      </button>
+    </motion.article>
   );
 }
 
@@ -252,7 +342,7 @@ function ItemModal({ selected, onClose }: { selected: { item: MenuItem; catId: s
   item.modifiers.forEach((g) => {
     if (g.type === "single") {
       const opt = g.options.find((o) => o.id === single[g.id]);
-      if (opt && opt.price > 0) chosenMods.push({ name: `${opt.name}`, price: opt.price });
+      if (opt && opt.price > 0) chosenMods.push({ name: opt.name, price: opt.price });
       else if (opt && g.id === "spice" && opt.id !== "mild") chosenMods.push({ name: opt.name, price: 0 });
     } else {
       (multi[g.id] ?? []).forEach((oid) => {
@@ -313,7 +403,7 @@ function ItemModal({ selected, onClose }: { selected: { item: MenuItem; catId: s
                         <span className="flex items-center gap-3">
                           <span className={cn(
                             "grid place-items-center border-2 transition-colors",
-                            g.type === "single" ? "w-4.5 h-4.5 w-[18px] h-[18px] rounded-full" : "w-[18px] h-[18px] rounded-md",
+                            g.type === "single" ? "w-[18px] h-[18px] rounded-full" : "w-[18px] h-[18px] rounded-md",
                             isSel ? "border-ember-500 bg-ember-500 text-white" : "border-stone-300 dark:border-stone-600",
                           )}>
                             {isSel && (g.type === "single" ? <span className="w-1.5 h-1.5 rounded-full bg-white" /> : <span className="text-[10px] font-bold leading-none">✓</span>)}
