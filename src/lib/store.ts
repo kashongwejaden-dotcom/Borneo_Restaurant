@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type {
   CartLine, Category, Order, OrderStatus, Promotion, Reservation, Toast, User,
 } from "./types";
@@ -244,11 +244,16 @@ export function useLiveFeed() {
   }, []);
 }
 
-/* convenience selectors */
-export const useLowStock = () =>
-  useStore((s) =>
-    s.categories.flatMap((c) => c.items.filter((i) => i.stock < 10).map((i) => ({ item: i, category: c.name }))),
+/* convenience selectors — NB: selectors must return stable references
+   (store slices/primitives). Deriving new arrays inside the selector
+   would make React's useSyncExternalStore loop. */
+export const useLowStock = () => {
+  const categories = useStore((s) => s.categories);
+  return useMemo(
+    () => categories.flatMap((c) => c.items.filter((i) => i.stock < 10).map((i) => ({ item: i, category: c.name }))),
+    [categories],
   );
+};
 
 export const useCartCount = () => useStore((s) => s.cart.reduce((n, l) => n + l.qty, 0));
 export const useCartTotal = () => useStore((s) => s.cart.reduce((n, l) => n + l.unitPrice * l.qty, 0));

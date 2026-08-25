@@ -76,7 +76,8 @@ export function TagChip({ tag, short }: { tag: keyof typeof TAG_META; short?: bo
 /* ---------------- Live order ticker ---------------- */
 
 export function OrderTicker() {
-  const orders = useStore((s) => s.orders.slice(0, 8));
+  const all = useStore((s) => s.orders);
+  const orders = all.slice(0, 8); // derive outside the selector — keep the snapshot stable
   const items = orders.map((o) => `${o.code} · ${o.channel === "pickup" ? "Pickup" : "Delivery"} · ${money(o.total)}`);
   const strip = [...items, ...items];
   return (
