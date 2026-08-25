@@ -134,20 +134,21 @@ function PriceEditor({ item, catId }: { item: MenuItem; catId: string }) {
   const [draft, setDraft] = useState(String(item.price));
 
   const commit = () => {
+    // empty field = revert to the current price, never silently zero it out
+    if (draft.trim() === "") return setDraft(String(item.price));
     const val = Math.max(0, Number(draft) || 0);
     if (val !== item.price) {
       updateItem(catId, item.id, { price: val });
       toast(`${item.name} price → ${money(val)}`);
-    } else {
-      setDraft(String(item.price));
     }
+    setDraft(String(val));
   };
 
   return (
     <div className="relative w-[118px] shrink-0">
       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-stone-500">FRw</span>
       <input
-        value={Number(draft).toLocaleString()}
+        value={draft === "" ? "" : Number(draft).toLocaleString()}
         onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ""))}
         onBlur={commit}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
