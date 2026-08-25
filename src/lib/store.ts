@@ -198,7 +198,8 @@ export const useStore = create<Store>()(
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
     }),
     {
-      name: "eatlocal-os-v1",
+      name: "eatlocal-os-v2",
+      version: 2,
       partialize: (s) => ({
         theme: s.theme,
         user: s.user,
@@ -209,6 +210,50 @@ export const useStore = create<Store>()(
         reservations: s.reservations,
         promos: s.promos,
       }),
+      /**
+       * Defensive rehydration: if persisted data from an older session doesn't
+       * match the current schema, fall back to fresh seed data for that slice
+       * instead of letting a malformed object crash the render tree.
+       */
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Record<string, unknown>;
+        const cats = p.categories as Category[] | undefined;
+        const validCats =
+          Array.isArray(cats) &&
+          cats.length > 0 &&
+          cats.every(
+            (c) =>
+              c && typeof c.id === "string" && typeof c.name === "string" &&
+              Array.isArray(c.items) &&
+              c.items.every(
+                (i) => i && typeof i.price === "number" && Array.isArray(i.tags) && Array.isArray(i.modifiers),
+              ),
+          );
+        const orders = p.orders as Order[] | undefined;
+        const validOrders =
+          !Array.isArray(orders) ||
+          orders.every((o) => o && typeof o.total === "number" && typeof o.status === "string" && Array.isArray(o.items) && !!o.customer);
+        const reservations = p.reservations as Reservation[] | undefined;
+        const validRes =
+          !Array.isArray(reservations) ||
+          reservations.every((r) => r && typeof r.date === "string" && typeof r.time === "string" && typeof r.party === "number");
+        const promos = p.promos as Promotion[] | undefined;
+        const validPromos =
+          !Array.isArray(promos) ||
+          promos.every((pr) => pr && typeof pr.start === "number" && typeof pr.end === "number" && typeof pr.percent === "number");
+        const cart = p.cart as CartLine[] | undefined;
+        return {
+          ...current,
+          theme: p.theme === "dark" || p.theme === "light" ? p.theme : current.theme,
+          user: (p.user as User | null | undefined) ?? current.user,
+          accepting: typeof p.accepting === "boolean" ? p.accepting : current.accepting,
+          categories: validCats ? (cats as Category[]) : current.categories,
+          cart: Array.isArray(cart) ? cart.filter((l) => l && typeof l.unitPrice === "number") : current.cart,
+          orders: validOrders ? (orders as Order[]) : current.orders,
+          reservations: validRes ? (reservations as Reservation[]) : current.reservations,
+          promos: validPromos ? (promos as Promotion[]) : current.promos,
+        };
+      },
     },
   ),
 );
@@ -222,6 +267,7 @@ export const useStore = create<Store>()(
 export function useLiveFeed() {
   useEffect(() => {
     const tick = setInterval(() => {
+      try {
       const s = useStore.getState();
       const now = Date.now();
 
@@ -238,6 +284,9 @@ export function useLiveFeed() {
         const incoming = makeRandomOrder();
         useStore.setState((st) => ({ orders: [{ ...incoming, id: uid("ord") }, ...st.orders].slice(0, 60) }));
         s.toast(`New online order ${incoming.code} · ${incoming.channel}`, "info");
+      }
+      } catch {
+        /* a hiccup in the simulated feed must never take the kitchen down */
       }
     }, 5000);
     return () => clearInterval(tick);
