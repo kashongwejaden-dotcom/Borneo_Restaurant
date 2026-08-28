@@ -268,9 +268,11 @@ export const useStore = create<Store>()(
           accepting: typeof p.accepting === "boolean" ? p.accepting : current.accepting,
           categories: validCats ? (cats as Category[]) : current.categories,
           cart: Array.isArray(cart) ? cart.filter((l) => l && typeof l.unitPrice === "number") : current.cart,
-          orders: validOrders ? (orders as Order[]) : current.orders,
-          reservations: validRes ? (reservations as Reservation[]) : current.reservations,
-          promos: validPromos ? (promos as Promotion[]) : current.promos,
+          // NB: only adopt persisted data when it's actually a valid array —
+          // otherwise fall back to the seeded state (never undefined).
+          orders: Array.isArray(orders) && validOrders ? (orders as Order[]) : current.orders,
+          reservations: Array.isArray(reservations) && validRes ? (reservations as Reservation[]) : current.reservations,
+          promos: Array.isArray(promos) && validPromos ? (promos as Promotion[]) : current.promos,
         };
       },
     },
