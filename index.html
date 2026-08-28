@@ -53,11 +53,16 @@
       // Boot watchdog: if React never mounts, surface the actual reason
       // instead of leaving the diner staring at the splash screen.
       window.__bootErrors = [];
+      // dev-tooling noise (Vite HMR websocket etc.) is not an app failure
+      var bootNoise = /vite|websocket|hot ?update|hmr|client:\d|network|failed to fetch|load failed|abort/i;
       window.addEventListener("error", function (e) {
-        window.__bootErrors.push((e.message || "unknown error") + (e.filename ? " @ " + e.filename + ":" + e.lineno : ""));
+        var msg = (e.message || "unknown error") + (e.filename ? " @ " + e.filename + ":" + e.lineno : "");
+        if (!bootNoise.test(msg)) window.__bootErrors.push(msg);
       });
       window.addEventListener("unhandledrejection", function (e) {
-        window.__bootErrors.push("Promise: " + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+        var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+        if (bootNoise.test(msg)) { e.preventDefault(); return; }
+        window.__bootErrors.push("Promise: " + msg);
       });
       setTimeout(function () {
         var status = document.getElementById("boot-status");

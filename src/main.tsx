@@ -4,14 +4,26 @@ import "./index.css";
 import App from "./App.tsx";
 
 /* ------------------------------------------------------------------ */
-/*  Fatal-error net: no class of failure may ever render as a blank    */
-/*  white screen. React render errors are caught by the boundary;      */
-/*  anything else (module load, async, timers) is caught globally and  */
-/*  painted with plain DOM so it cannot depend on React being alive.   */
+/*  Fatal-error net. Rules of the kitchen:                             */
+/*   1. A React render crash ALWAYS paints the diagnostic panel.       */
+/*   2. Boot-time failures (before React mounts) paint the panel too — */
+/*      a splash that never resolves must explain itself.              */
+/*   3. Once the app is live, stray async errors (HMR websockets,      */
+/*      dropped promises) are logged but never blank a working UI.     */
 /* ------------------------------------------------------------------ */
 
 const PANEL_STYLE =
   "min-height:100vh;display:grid;place-items:center;background:#1c1917;color:#faf8f5;font-family:system-ui,sans-serif;padding:24px;";
+
+/** Tooling noise that must never be mistaken for an app failure. */
+function isNoise(msg: string) {
+  return /vite|websocket|hot ?update|hmr|client:\d|network|failed to fetch|load failed|abort/i.test(msg);
+}
+
+/** True while the HTML splash is still on screen, i.e. React hasn't mounted. */
+function isPreMount() {
+  return !!document.querySelector("#root .boot");
+}
 
 function showFatalError(title: string, detail: string) {
   // idempotent — only ever show the first error
@@ -41,7 +53,7 @@ function showFatalError(title: string, detail: string) {
   document.getElementById("eatlocal-fatal-reload")?.addEventListener("click", () => location.reload());
 }
 
-/** React render-time boundary */
+/** React render-time boundary — the only failure that may replace a live UI. */
 class BootBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) {
@@ -63,11 +75,30 @@ class BootBoundary extends React.Component<{ children: React.ReactNode }, { erro
 
 /* global nets — module-load failures, async throws, rejected promises */
 window.addEventListener("error", (e) => {
-  showFatalError("The kitchen failed to fire up", `${e.message ?? "Unknown error"}\n\nat ${e.filename ?? "?"}:${e.lineno ?? "?"}\n\n${e.error?.stack ?? ""}`);
+  const msg = `${e.message ?? "Unknown error"}`;
+  if (isNoise(msg)) return;
+  if (isPreMount()) {
+    showFatalError("The kitchen failed to fire up", `${msg}\n\nat ${e.filename ?? "?"}:${e.lineno ?? "?"}\n\n${e.error?.stack ?? ""}`);
+  } else {
+    console.error("[EatLocal OS] uncaught:", e.error ?? msg);
+  }
 });
 window.addEventListener("unhandledrejection", (e) => {
   const reason = e.reason as Error | string | undefined;
-  showFatalError("A promise fell on the floor", typeof reason === "string" ? reason : `${reason?.message ?? reason}\n\n${reason?.stack ?? ""}`);
+  const msg = typeof reason === "string" ? reason : `${reason?.message ?? reason}`;
+  if (isNoise(msg)) {
+    e.preventDefault(); // dev-tooling noise (e.g. HMR socket) — silence it
+    return;
+  }
+  if (isPreMount()) {
+    showFatalError(
+      "A promise fell on the floor",
+      typeof reason === "string" ? reason : `${reason?.message ?? reason}\n\n${reason?.stack ?? ""}`,
+    );
+  } else {
+    e.preventDefault();
+    console.error("[EatLocal OS] unhandled rejection:", reason);
+  }
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
