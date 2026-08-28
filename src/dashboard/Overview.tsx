@@ -1,14 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bike, Flame, Receipt, TrendingUp, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bike, Flame, Megaphone, Receipt, TrendingUp, Wallet, type LucideIcon } from "lucide-react";
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { CHANNEL_SPLIT, HOURLY_REVENUE, POPULAR_ITEMS } from "../lib/seed";
 import { money, timeAgo, useFakeLoad, useCountUp, cn } from "../lib/utils";
 import { useStore } from "../lib/store";
-import { Skeleton, Sparkline } from "../components/ui";
+import { Button, Input, Skeleton, Sparkline } from "../components/ui";
 
 const STATUS_TONE: Record<string, string> = {
   new: "bg-ember-500/15 text-ember-400",
@@ -66,6 +66,9 @@ export default function Overview() {
           ),
         )}
       </div>
+
+      {/* storefront announcement — publishes straight to the live menu */}
+      {!loading && <AnnouncementCard />}
 
       {/* charts */}
       <div className="grid xl:grid-cols-[1.5fr_1fr] gap-4">
@@ -220,6 +223,55 @@ interface MetricDef {
   iconCls: string;
   spark: number[];
   sparkColor: string;
+}
+
+/* ---------------- storefront announcement ---------------- */
+
+function AnnouncementCard() {
+  const announcement = useStore((s) => s.announcement);
+  const setAnnouncement = useStore((s) => s.setAnnouncement);
+  const toast = useStore((s) => s.toast);
+  const [draft, setDraft] = useState(announcement);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4.5 p-5 flex flex-col sm:flex-row gap-3.5 sm:items-center"
+    >
+      <span className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 grid place-items-center shrink-0">
+        <Megaphone size={17} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-amber-400">Storefront note — “From the kitchen”</p>
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="e.g. Rendang is back for the weekend — first 20 orders get free krupuk"
+          className="mt-2 h-10 bg-stone-950/70 border-stone-700/80"
+          aria-label="Storefront announcement"
+        />
+      </div>
+      <div className="flex gap-2.5 shrink-0">
+        <Button
+          variant="line"
+          size="sm"
+          className="h-10"
+          onClick={() => { setDraft(""); setAnnouncement(""); toast("Note removed from the storefront", "info"); }}
+        >
+          Clear
+        </Button>
+        <Button
+          size="sm"
+          className="h-10"
+          onClick={() => { setAnnouncement(draft); toast(draft.trim() ? "Note published to the live menu" : "Note removed from the storefront"); }}
+        >
+          Publish
+        </Button>
+      </div>
+    </motion.div>
+  );
 }
 
 function MetricCard({ m, index }: { m: MetricDef; index: number }) {

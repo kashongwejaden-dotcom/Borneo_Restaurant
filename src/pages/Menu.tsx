@@ -109,6 +109,8 @@ export default function MenuPage() {
             )}
           </AnimatePresence>
 
+          <AnnouncementBanner />
+
           {!accepting && (
             <div className="mt-6 rounded-xl border border-red-300/60 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-5 py-3.5 flex items-center gap-3 text-sm font-semibold text-red-700 dark:text-red-300">
               <AlertTriangle size={17} /> We're not accepting orders right now — the menu is open for browsing, checkout reopens shortly.
@@ -317,6 +319,21 @@ function ItemCard({ item, index, onOpen, badge }: { item: MenuItem; index: numbe
 /* ---------------- Item detail / modifiers modal ---------------- */
 
 /* ---------------- live promo countdown chip ---------------- */
+
+/** Kitchen note — written by the restaurant in their dashboard, shown to every diner. */
+function AnnouncementBanner() {
+  const announcement = useStore((s) => s.announcement);
+  if (!announcement) return null;
+  return (
+    <div className="mt-6 rounded-xl border border-amber-300/60 dark:border-amber-900/70 bg-amber-50/80 dark:bg-amber-950/30 px-5 py-3.5 flex items-start gap-3">
+      <Flame size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+      <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+        <span className="font-bold uppercase tracking-wider text-[11px] text-amber-700 dark:text-amber-400 mr-2">From the kitchen</span>
+        {announcement}
+      </p>
+    </div>
+  );
+}
 
 function PromoCountdown({ end }: { end: number }) {
   const [, tick] = useState(0);

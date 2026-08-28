@@ -26,7 +26,20 @@ export const IMG = {
   ikan: "https://image.qwenlm.ai/generated-images/4eac9f69-7cd7-446f-94d5-ccf1c41c6aa7/_result.png",
   lumpia: "https://image.qwenlm.ai/generated-images/d1a1a2eb-3f63-494e-818e-a989adca336d/_result.png",
   cendol: "https://image.qwenlm.ai/generated-images/f5c11e43-be4c-4987-afcf-a7cfb573247a/_result.png",
+  chef: "https://image.qwenlm.ai/generated-images/f09068e3-bf37-4c1d-95b3-19a5190e6dc3/_result.png",
+  sambal: "https://image.qwenlm.ai/generated-images/f0b00b89-2af5-4d80-b6c5-c2b062c80c66/_result.png",
 };
+
+/** Real-world links for the Visit section */
+export const LINKS = {
+  maps: "https://maps.app.goo.gl/YbasqT2mNm1Cx7dM7",
+  phone: "+250787296667",
+  whatsapp: "https://wa.me/250787296667",
+};
+
+/** Default storefront announcement — editable from the dashboard */
+export const SEED_ANNOUNCEMENT =
+  "Sambal matah is back — ground fresh every morning before ten.";
 
 /* Shared modifier groups (Prisma: ModifierGroup / ModifierOption) */
 const spice: ModifierGroup = {

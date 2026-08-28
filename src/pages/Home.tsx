@@ -1,12 +1,23 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bike, Clock, Flame, LocateFixed, MapPin, Percent, Plus, Search, Star, UtensilsCrossed, Wallet } from "lucide-react";
-import { IMG, RESTAURANT } from "../lib/seed";
+import { ArrowRight, Bike, Clock, Flame, LocateFixed, MapPin, MessageCircle, Percent, Phone, Plus, Search, Star, UtensilsCrossed, Wallet } from "lucide-react";
+import { IMG, LINKS, RESTAURANT } from "../lib/seed";
 import { money, cn } from "../lib/utils";
 import { useStore } from "../lib/store";
 import { Button, Badge } from "../components/ui";
 import { OrderTicker, Reveal, Scramble, SectionHead, TagChip, Footer } from "../components/shared";
+
+const GALLERY: { key: string; src: string; label: string; span: string }[] = [
+  { key: "interior", src: IMG.interior, label: "The room — rattan & firelight", span: "col-span-2 row-span-2" },
+  { key: "rendang", src: IMG.rendang, label: "48-hour rendang sapi", span: "col-span-2" },
+  { key: "sate", src: IMG.sate, label: "Saté, straight off the coals", span: "" },
+  { key: "lumpia", src: IMG.lumpia, label: "Small plates to begin", span: "" },
+  { key: "nasigoreng", src: IMG.nasigoreng, label: "Nasi goreng Borneo", span: "col-span-2" },
+  { key: "sambal", src: IMG.sambal, label: "Sambal, pounded before ten", span: "" },
+  { key: "cendol", src: IMG.cendol, label: "Es cendol to finish", span: "" },
+  { key: "ikan", src: IMG.ikan, label: "Ikan bakar & dabu-dabu", span: "col-span-2" },
+];
 
 const REVIEWS = [
   { name: "Keza N.", time: "2 weeks ago", stars: 5, text: "The rendang is dangerously good — ordered direct and it was ready before I parked. Not a single franc wasted on app fees." },
@@ -274,11 +285,106 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ================= OUR STORY ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20 sm:mt-28">
+        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
+          <Reveal className="order-2 lg:order-1">
+            <div className="relative rounded-[24px] overflow-hidden shadow-lift">
+              <img src={IMG.chef} alt="Our chef tending the charcoal grill at dusk" className="kenburns w-full aspect-[4/3.3] object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-transparent to-transparent" aria-hidden />
+              <figure className="absolute bottom-5 left-5 right-5 sm:right-auto sm:max-w-sm bg-white/90 dark:bg-stone-900/90 backdrop-blur-md rounded-xl p-5 shadow-lift">
+                <blockquote className="font-display italic text-[17px] leading-snug text-ink dark:text-stone-100">
+                  “If it can be rushed, it isn't rendang.”
+                </blockquote>
+                <figcaption className="mt-2 text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500">Ibu Sari · head of kitchen</figcaption>
+              </figure>
+            </div>
+          </Reveal>
+
+          <div className="order-1 lg:order-2">
+            <SectionHead kicker="Our story" title="Jakarta recipes, Kigali fire." />
+            <p className="text-[15px] leading-relaxed text-stone-600 dark:text-stone-300 max-w-xl -mt-3">
+              Borneo opened with one charcoal grill, one wok, and a suitcase of family recipes carried all the way from Indonesia.
+              We cook the long way — spice pastes ground fresh every morning, saté skewered by hand, and rendang given two full days on a low fire
+              until the coconut oil separates and the beef surrenders.
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-stone-600 dark:text-stone-300 max-w-xl">
+              It's a family kitchen. The sambal trio is pounded before ten, the krupuk is fried to order, and nothing leaves the pass
+              that Ibu Sari wouldn't serve her own table.
+            </p>
+
+            {/* the 48-hour rendang clock */}
+            <div className="mt-9">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-4">The 48-hour rendang, hour by hour</p>
+              <div className="grid grid-cols-4 gap-3 relative">
+                <span className="absolute top-[5px] left-[6%] right-[6%] h-0.5 bg-stone-200 dark:bg-stone-800" aria-hidden />
+                <motion.span
+                  className="absolute top-[5px] left-[6%] h-0.5 ember-gradient"
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "88%" }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.6, ease: "easeInOut" }}
+                  aria-hidden
+                />
+                {[
+                  { h: "Hour 0", d: "Spices toasted & ground by hand" },
+                  { h: "Hour 4", d: "Beef seared in young coconut cream" },
+                  { h: "Hour 24", d: "Stirred hourly over low flame" },
+                  { h: "Hour 48", d: "Dark, glossy — rendang, served" },
+                ].map((s, i) => (
+                  <div key={s.h} className="relative">
+                    <span className="block w-3 h-3 rounded-full ember-gradient ring-4 ring-paper dark:ring-stone-950" />
+                    <p className="mt-3 font-mono text-[11.5px] font-bold text-ember-600 dark:text-ember-400">{s.h}</p>
+                    <p className="mt-1 text-[12px] leading-snug text-stone-500 dark:text-stone-400">{s.d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FROM THE PASS (gallery) ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20 sm:mt-28">
+        <SectionHead
+          kicker="From the pass"
+          title="Plates, fire & the room"
+          right={
+            <Link to="/menu" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-ember-600 dark:text-ember-400 hover:gap-2.5 transition-all">
+              See the full menu <ArrowRight size={16} />
+            </Link>
+          }
+        />
+        <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] sm:auto-rows-[185px] gap-3.5">
+          {GALLERY.map((g, i) => (
+            <motion.div
+              key={g.key + i}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.55, delay: (i % 4) * 0.06 }}
+              className={cn("relative rounded-xl overflow-hidden group", g.span)}
+            >
+              <img
+                src={g.src}
+                alt={g.label}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden />
+              <p className="absolute bottom-3 left-3.5 text-paper text-[12.5px] font-bold translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                {g.label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* ================= HOW DIRECT ORDERING WORKS ================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20 sm:mt-28">
         <div className="grid lg:grid-cols-[1fr_1.1fr] gap-14 items-start">
           <div>
-            <SectionHead kicker="Why order direct" title="The 30% toll booth is gone" />
+            <SectionHead kicker="Why order direct" title="Skip the apps. Eat better." />
             <div className="space-y-9">
               {[
                 { n: "01", t: "Order from the live menu", d: "Real-time stock, honest photos, your sambal level remembered. Guest checkout — no account needed." },
@@ -300,18 +406,18 @@ export default function Home() {
             <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 shadow-card">
               <div className="bg-stone-200/60 dark:bg-stone-900 p-6 flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-400 mb-1.5">Typical delivery app</p>
-                  <p className="font-display text-3xl font-bold text-stone-500 dark:text-stone-500 line-through decoration-red-500/70 decoration-4">30% + fees</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-400 mb-1.5">Third-party apps</p>
+                  <p className="font-display text-3xl font-bold text-stone-500 dark:text-stone-500 line-through decoration-red-500/70 decoration-4">up to 30%</p>
                 </div>
-                <div className="text-right text-[12px] text-stone-400 font-medium max-w-[130px]">of every order leaves the restaurant</div>
+                <div className="text-right text-[12px] text-stone-400 font-medium max-w-[140px]">of your bill never reaches our kitchen</div>
               </div>
               <div className="ember-gradient text-white p-6 flex items-end justify-between gap-4 relative overflow-hidden">
                 <span className="absolute -right-8 -top-10 opacity-15" aria-hidden><Flame size={170} /></span>
                 <div className="relative">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 mb-1.5">EatLocal OS</p>
-                  <p className="font-display text-3xl font-bold">0% — flat $99/mo</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 mb-1.5">Direct from Borneo</p>
+                  <p className="font-display text-3xl font-bold">0% — every franc to the food</p>
                 </div>
-                <div className="relative text-right text-[12px] text-white/80 font-medium max-w-[130px]">the kitchen keeps everything else</div>
+                <div className="relative text-right text-[12px] text-white/80 font-medium max-w-[140px]">goes to fire, produce & the people who cook it</div>
               </div>
               <div className="p-6 grid grid-cols-3 divide-x divide-stone-200 dark:divide-stone-800 bg-white dark:bg-stone-950 text-center">
                 {[
@@ -401,32 +507,99 @@ export default function Home() {
         </Reveal>
       </section>
 
-      {/* ================= PARTNER CTA ================= */}
+      {/* ================= VISIT US ================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-20 sm:mt-28">
-        <Reveal>
-          <div className="rounded-[24px] border-2 border-dashed border-ember-500/40 bg-ember-500/5 dark:bg-ember-950/20 p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.22em] text-ember-600 dark:text-ember-400 mb-2">EatLocal OS · for restaurant owners</p>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold leading-tight max-w-xl">
-                Run your restaurant on the system that takes <span className="text-ember-gradient">nothing per order.</span>
+        <div className="grid lg:grid-cols-[1.1fr_1fr] gap-6 items-stretch">
+          <Reveal>
+            <div className="h-full rounded-[24px] bg-ink text-paper p-8 sm:p-12 grain relative overflow-hidden flex flex-col">
+              <span className="absolute -right-16 -top-16 opacity-10" aria-hidden><MapPin size={280} /></span>
+              <p className="text-[12px] font-bold uppercase tracking-[0.22em] text-ember-400 mb-3">Find us</p>
+              <h2 className="font-display text-3xl sm:text-[40px] font-bold leading-[1.08]">
+                18 KG 4 Ave — <span className="italic text-ember-300">follow the smoke.</span>
               </h2>
+              <div className="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-5 text-sm relative">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500 mb-2.5">Hours</p>
+                  <p className="font-semibold">Every day · 11:00 – 20:30</p>
+                  <p className="text-stone-400 mt-1">Last orders at 20:00</p>
+                  <p className="text-stone-400">Kitchen rests Mondays 15:00–17:00</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500 mb-2.5">Contact</p>
+                  <p className="font-semibold">{RESTAURANT.address}</p>
+                  <a href={`tel:${LINKS.phone}`} className="text-stone-300 hover:text-ember-300 transition-colors mt-1 block">{RESTAURANT.phone}</a>
+                  <p className="text-stone-400 mt-1">Walk-ins welcome · parking on KG 7</p>
+                </div>
+              </div>
+              <div className="mt-9 flex flex-wrap gap-3 relative">
+                <a href={LINKS.maps} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 h-[52px] px-7 rounded-lg ember-gradient text-white text-[15px] font-semibold shadow-[0_8px_20px_-8px_rgba(234,88,12,0.7)] hover:brightness-105 transition-all">
+                  <MapPin size={17} /> Get directions
+                </a>
+                <a href={LINKS.whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 h-[52px] px-6 rounded-lg border border-white/25 text-[15px] font-semibold hover:border-emerald-400 hover:text-emerald-300 transition-colors">
+                  <MessageCircle size={17} /> WhatsApp us
+                </a>
+                <a href={`tel:${LINKS.phone}`} className="inline-flex items-center gap-2 h-[52px] px-6 rounded-lg border border-white/25 text-[15px] font-semibold hover:border-ember-400 hover:text-ember-300 transition-colors">
+                  <Phone size={16} /> Call
+                </a>
+              </div>
             </div>
-            <PartnerButton />
-          </div>
-        </Reveal>
+          </Reveal>
+
+          {/* stylized map */}
+          <Reveal delay={0.12}>
+            <a href={LINKS.maps} target="_blank" rel="noreferrer" aria-label="Open Borneo Indonesian Restaurant in Google Maps" className="block h-full min-h-[340px] rounded-[24px] overflow-hidden border border-stone-200 dark:border-stone-800 shadow-card relative group">
+              <svg viewBox="0 0 480 380" className="w-full h-full" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Sketch map of the neighbourhood around KG 4 Ave">
+                <rect width="480" height="380" fill="#f5f1ea" className="dark:hidden" />
+                <rect width="480" height="380" fill="#141210" className="hidden dark:block" />
+                {/* city blocks */}
+                <g fill="#e7e0d4" className="dark:opacity-100" opacity="0.9">
+                  <rect x="30" y="30" width="150" height="100" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                  <rect x="215" y="30" width="110" height="100" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                  <rect x="360" y="30" width="90" height="150" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                  <rect x="30" y="170" width="110" height="120" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                  <rect x="30" y="320" width="180" height="40" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                  <rect x="310" y="230" width="140" height="120" rx="6" fill="#ece5d8" className="dark:fill-stone-900" />
+                </g>
+                {/* streets */}
+                <g stroke="#d6ccba" strokeWidth="14" className="dark:stroke-stone-800" strokeLinecap="round">
+                  <path d="M0 150 H480" />
+                  <path d="M195 0 V380" />
+                  <path d="M345 0 V380" />
+                  <path d="M0 300 H480" />
+                </g>
+                <g stroke="#ffffff" strokeWidth="1.5" strokeDasharray="8 10" opacity="0.7">
+                  <path d="M0 150 H480" />
+                  <path d="M195 0 V380" />
+                </g>
+                {/* street names */}
+                <g className="fill-stone-500 dark:fill-stone-500" fontSize="11" fontWeight="700" letterSpacing="1.5">
+                  <text x="24" y="141">KG 4 AVE</text>
+                  <text x="204" y="24" transform="rotate(90 204 24)">KG 7 ST</text>
+                  <text x="24" y="291">KG 5 AVE</text>
+                </g>
+                {/* the restaurant */}
+                <g transform="translate(268 150)">
+                  <circle r="26" fill="#f97316" opacity="0.18">
+                    <animate attributeName="r" values="20;30;20" dur="2.6s" repeatCount="indefinite" />
+                  </circle>
+                  <circle r="11" fill="#ea580c" stroke="#fff" strokeWidth="3" />
+                  <path d="M0 -4c.4 2.4-3 3.9-3 7 0 1.6 1 2.8 2 3.3-.3-2.1 1.5-2.9 1.4-4.8 1.8 1 3.5 2.8 3.5 5.3 0 1-.3 1.8-.7 2.5 1.7-.8 3.7-2.5 3.7-5.4C7 -.2 1.7-1.1 0-4Z" fill="#fff" />
+                </g>
+                <g transform="translate(268 106)">
+                  <rect x="-52" y="-17" width="104" height="26" rx="13" fill="#1c1917" />
+                  <text textAnchor="middle" y="1" fill="#faf8f5" fontSize="11" fontWeight="800" letterSpacing="1">BORNEO</text>
+                </g>
+              </svg>
+              <span className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white/90 dark:bg-stone-900/90 backdrop-blur-sm px-4 py-2 text-[12px] font-bold text-ink dark:text-stone-100 shadow-card group-hover:text-ember-600 dark:group-hover:text-ember-400 transition-colors">
+                Open in Google Maps <ArrowRight size={13} />
+              </span>
+            </a>
+          </Reveal>
+        </div>
       </section>
 
       <Footer />
     </div>
-  );
-}
-
-function PartnerButton() {
-  const openAuth = useStore((s) => s.openAuth);
-  return (
-    <Button size="lg" className="shrink-0" onClick={() => openAuth("partner")}>
-      See the dashboard <ArrowRight size={17} />
-    </Button>
   );
 }
 

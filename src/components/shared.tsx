@@ -2,10 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Flame, Leaf, Minus, Moon, Phone, Plus, ShoppingBag, Sprout, Star, Sun, Trash2, UtensilsCrossed, Wheat, X, Apple, Chrome,
+  ArrowRight, Flame, Leaf, MapPin, MessageCircle, Minus, Moon, Phone, Plus, ShoppingBag, Sprout, Star, Sun, Trash2, UtensilsCrossed, Wheat, X, Apple, Chrome,
 } from "lucide-react";
 import { cn, money } from "../lib/utils";
-import { RESTAURANT } from "../lib/seed";
+import { LINKS, RESTAURANT } from "../lib/seed";
 import { useCartCount, useCartTotal, useStore } from "../lib/store";
 import { Badge, Button, Drawer, Field, Input, Modal, Segmented } from "./ui";
 
@@ -307,49 +307,64 @@ export function Navbar() {
 /* ---------------- Footer ---------------- */
 
 export function Footer() {
-  const openAuth = useStore((s) => s.openAuth);
   return (
     <footer className="mt-24 bg-ink text-stone-300 dark:bg-stone-900 grain relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr] relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr] relative">
         <div>
           <div className="flex items-center gap-3">
             <BrandMark className="w-10 h-10" />
             <span className="font-display text-xl font-bold text-white">{RESTAURANT.fullName}</span>
           </div>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-stone-400">
-            Order direct from our kitchen. Every franc goes to the food, the staff and the fire — never to a middleman.
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-stone-400">
+            {RESTAURANT.tagline}. Order direct from our kitchen — every franc goes to the food, the staff and the fire.
           </p>
           <div className="mt-5 flex items-center gap-2 text-sm">
             <Star size={15} className="text-ember-400 fill-ember-400" />
             <span className="font-semibold text-white">{RESTAURANT.rating}</span>
-            <span className="text-stone-500">· {RESTAURANT.reviews} reviews</span>
+            <span className="text-stone-500">· {RESTAURANT.reviews} Google reviews</span>
           </div>
+        </div>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-4">Order</p>
+          <ul className="space-y-2.5 text-sm">
+            <li><Link to="/menu" className="hover:text-ember-300 transition-colors">Live menu</Link></li>
+            <li><Link to="/checkout" className="hover:text-ember-300 transition-colors">Checkout</Link></li>
+            <li><Link to="/track" className="hover:text-ember-300 transition-colors">Track my order</Link></li>
+            <li><Link to="/reserve" className="hover:text-ember-300 transition-colors">Book a table</Link></li>
+          </ul>
         </div>
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-4">Visit us</p>
           <ul className="space-y-2.5 text-sm">
             <li className="flex gap-2.5"><UtensilsCrossed size={15} className="mt-0.5 text-ember-500 shrink-0" />{RESTAURANT.address}</li>
-            <li className="flex gap-2.5"><Phone size={15} className="mt-0.5 text-ember-500 shrink-0" />{RESTAURANT.phone}</li>
             <li className="flex gap-2.5"><Flame size={15} className="mt-0.5 text-ember-500 shrink-0" />{RESTAURANT.hours}</li>
           </ul>
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ember-400 mb-2">Powered by EatLocal OS</p>
-          <p className="text-sm text-stone-300 leading-relaxed">
-            0% commission. One flat <span className="text-white font-semibold">$99/mo</span>. Own your customers, your margins, your menu.
-          </p>
-          <button
-            onClick={() => openAuth("partner")}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ember-400 hover:text-ember-300 transition-colors"
-          >
-            Run your restaurant on it <ArrowRight size={15} />
-          </button>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-4">Talk to us</p>
+          <ul className="space-y-2.5 text-sm">
+            <li>
+              <a href={`tel:${LINKS.phone}`} className="flex gap-2.5 hover:text-ember-300 transition-colors">
+                <Phone size={15} className="mt-0.5 text-ember-500 shrink-0" />{RESTAURANT.phone}
+              </a>
+            </li>
+            <li>
+              <a href={LINKS.whatsapp} target="_blank" rel="noreferrer" className="flex gap-2.5 hover:text-emerald-300 transition-colors">
+                <MessageCircle size={15} className="mt-0.5 text-ember-500 shrink-0" />WhatsApp
+              </a>
+            </li>
+            <li>
+              <a href={LINKS.maps} target="_blank" rel="noreferrer" className="flex gap-2.5 hover:text-ember-300 transition-colors">
+                <MapPin size={15} className="mt-0.5 text-ember-500 shrink-0" />Google Maps
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-stone-500">
           <span>© {new Date().getFullYear()} {RESTAURANT.fullName} · Kigali, Rwanda</span>
-          <span className="font-mono">EatLocal OS v1.0 · commission-free by design</span>
+          <span>Site & ordering powered by <span className="text-stone-300 font-semibold">EatLocal OS</span> — 0% commission, the restaurant keeps it all</span>
         </div>
       </div>
     </footer>
@@ -535,9 +550,6 @@ export function AuthModal() {
             <Button variant="outline" size="lg" className="w-full" onClick={googleLogin}>
               <Chrome size={17} className="text-ember-600" /> Continue with Google
             </Button>
-            <button onClick={() => openAuth("partner")} className="mt-5 w-full text-center text-[13px] font-semibold text-ember-600 dark:text-ember-400 hover:underline">
-              Own a restaurant? Partner with EatLocal →
-            </button>
           </>
         )}
 

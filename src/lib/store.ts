@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import type {
   CartLine, Category, Order, OrderStatus, Promotion, Reservation, Toast, User,
 } from "./types";
-import { SEED_CATEGORIES, SEED_ORDERS, SEED_PROMOS, SEED_RESERVATIONS, makeRandomOrder } from "./seed";
+import { SEED_ANNOUNCEMENT, SEED_CATEGORIES, SEED_ORDERS, SEED_PROMOS, SEED_RESERVATIONS, makeRandomOrder } from "./seed";
 import { clamp, isPromoLive, orderCode, uid } from "./utils";
 
 /**
@@ -27,11 +27,15 @@ interface Store {
   /* restaurant runtime */
   accepting: boolean;
   toggleAccepting: () => void;
+  announcement: string;
+  setAnnouncement: (v: string) => void;
 
   /* menu / inventory */
   categories: Category[];
   updateItem: (catId: string, itemId: string, patch: Partial<Category["items"][number]>) => void;
   reorderItems: (catId: string, from: number, to: number) => void;
+  addItem: (catId: string, item: Category["items"][number]) => void;
+  removeItem: (catId: string, itemId: string) => void;
 
   /* cart & checkout */
   cart: CartLine[];
@@ -98,6 +102,8 @@ export const useStore = create<Store>()(
 
       accepting: true,
       toggleAccepting: () => set((s) => ({ accepting: !s.accepting })),
+      announcement: SEED_ANNOUNCEMENT,
+      setAnnouncement: (v) => set({ announcement: v.trim() }),
 
       categories: SEED_CATEGORIES,
       updateItem: (catId, itemId, patch) =>
@@ -115,6 +121,18 @@ export const useStore = create<Store>()(
             items.splice(to, 0, moved);
             return { ...c, items };
           }),
+        })),
+      /** Publish a new dish — appears on the live menu immediately. */
+      addItem: (catId, item) =>
+        set((s) => ({
+          categories: s.categories.map((c) => (c.id === catId ? { ...c, items: [...c.items, item] } : c)),
+        })),
+      /** Pull a dish from the menu entirely. */
+      removeItem: (catId, itemId) =>
+        set((s) => ({
+          categories: s.categories.map((c) =>
+            c.id === catId ? { ...c, items: c.items.filter((i) => i.id !== itemId) } : c,
+          ),
         })),
 
       cart: [],
@@ -223,6 +241,7 @@ export const useStore = create<Store>()(
         theme: s.theme,
         user: s.user,
         accepting: s.accepting,
+        announcement: s.announcement,
         categories: s.categories,
         cart: s.cart,
         orders: s.orders,
@@ -266,6 +285,7 @@ export const useStore = create<Store>()(
           theme: p.theme === "dark" || p.theme === "light" ? p.theme : current.theme,
           user: (p.user as User | null | undefined) ?? current.user,
           accepting: typeof p.accepting === "boolean" ? p.accepting : current.accepting,
+          announcement: typeof p.announcement === "string" ? p.announcement : current.announcement,
           categories: validCats ? (cats as Category[]) : current.categories,
           cart: Array.isArray(cart) ? cart.filter((l) => l && typeof l.unitPrice === "number") : current.cart,
           // NB: only adopt persisted data when it's actually a valid array —

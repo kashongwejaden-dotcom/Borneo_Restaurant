@@ -5,12 +5,13 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { AlertTriangle, GripVertical, Star } from "lucide-react";
-import type { Category, MenuItem } from "../lib/types";
-import { cn, money, useFakeLoad } from "../lib/utils";
+import { AlertTriangle, GripVertical, Plus, Star, Trash2 } from "lucide-react";
+import type { Category, DietaryTag, MenuItem } from "../lib/types";
+import { cn, money, uid, useFakeLoad } from "../lib/utils";
 import { useStore } from "../lib/store";
-import { Skeleton, Switch } from "../components/ui";
+import { Button, Field, Input, Modal, Select, Skeleton, Switch, Textarea } from "../components/ui";
 import { TagChip } from "../components/shared";
+import { IMG } from "../lib/seed";
 
 export default function MenuBuilder() {
   const categories = useStore((s) => s.categories);
@@ -18,6 +19,7 @@ export default function MenuBuilder() {
   const toast = useStore((s) => s.toast);
   const loading = useFakeLoad(600);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [creating, setCreating] = useState(false);
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -32,16 +34,147 @@ export default function MenuBuilder() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      <p className="text-[13px] text-stone-400 -mt-1">
-        Drag to reorder how dishes appear on the live menu · flip <span className="text-stone-200 font-semibold">Available</span> to 86 an item instantly · tap a price to edit it in place.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 -mt-1">
+        <p className="text-[13px] text-stone-400 max-w-xl">
+          Drag to reorder how dishes appear on the live menu · flip <span className="text-stone-200 font-semibold">Available</span> to 86 an item instantly · tap a price to edit it in place.
+        </p>
+        <Button onClick={() => setCreating(true)}>
+          <Plus size={16} /> Post a new dish
+        </Button>
+      </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         {categories.map((cat) => (
           <CategorySection key={cat.id} cat={cat} loading={loading} />
         ))}
       </DndContext>
+
+      <NewDishModal open={creating} onClose={() => setCreating(false)} />
     </div>
+  );
+}
+
+/* ---------------- publish a new dish ---------------- */
+
+const ALL_TAGS: DietaryTag[] = ["V", "VG", "GF", "SPICY"];
+const IMAGE_CHOICES: { key: string; url: string; label: string }[] = [
+  { key: "rendang", url: IMG.rendang, label: "Rendang-style main" },
+  { key: "nasigoreng", url: IMG.nasigoreng, label: "Rice / wok" },
+  { key: "sate", url: IMG.sate, label: "Grill / satay" },
+  { key: "ikan", url: IMG.ikan, label: "Fish" },
+  { key: "lumpia", url: IMG.lumpia, label: "Small plates" },
+  { key: "cendol", url: IMG.cendol, label: "Dessert / drinks" },
+  { key: "chef", url: IMG.chef, label: "From the fire" },
+  { key: "sambal", url: IMG.sambal, label: "Sambal / condiments" },
+];
+
+function NewDishModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const categories = useStore((s) => s.categories);
+  const addItem = useStore((s) => s.addItem);
+  const toast = useStore((s) => s.toast);
+
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("20");
+  const [catId, setCatId] = useState("");
+  const [img, setImg] = useState(IMAGE_CHOICES[0].url);
+  const [tags, setTags] = useState<DietaryTag[]>([]);
+  const [err, setErr] = useState("");
+
+  const effectiveCat = catId || categories[0]?.id;
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const p = Math.round(Number(price));
+    if (!name.trim()) return setErr("The dish needs a name.");
+    if (!p || p <= 0) return setErr("Set a price in RWF — whole numbers only.");
+    if (!effectiveCat) return setErr("Pick a category.");
+    addItem(effectiveCat, {
+      id: uid("dish"),
+      name: name.trim(),
+      desc: desc.trim() || "A new dish from our kitchen.",
+      price: p,
+      img,
+      tags,
+      available: true,
+      stock: Math.max(0, Math.round(Number(stock) || 0)),
+      modifiers: [],
+    });
+    toast(`“${name.trim()}” is live on the menu`);
+    setName(""); setDesc(""); setPrice(""); setStock("20"); setTags([]); setErr("");
+    onClose();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} label="Post a new dish" wide>
+      <form onSubmit={submit} className="p-6 sm:p-8">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ember-500 mb-1.5">Menu builder</p>
+        <h2 className="font-display text-2xl font-bold text-ink dark:text-white">Post a new dish</h2>
+        <p className="text-sm text-stone-500 mt-1.5">It appears on the live menu the moment you publish — no restarts, no waiting.</p>
+
+        <div className="mt-6 grid sm:grid-cols-2 gap-4">
+          <Field label="Dish name"><Input value={name} onChange={(e) => { setName(e.target.value); setErr(""); }} placeholder="e.g. Bebek Goreng" /></Field>
+          <Field label="Category">
+            <Select value={effectiveCat} onChange={(e) => setCatId(e.target.value)} className="[color-scheme:dark]">
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </Select>
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Description"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="What's in it, how it's cooked — one hungry sentence." /></Field>
+          </div>
+          <Field label="Price (FRw)"><Input inputMode="numeric" value={price} onChange={(e) => { setPrice(e.target.value.replace(/\D/g, "")); setErr(""); }} placeholder="9500" /></Field>
+          <Field label="Starting stock (units)"><Input inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value.replace(/\D/g, ""))} /></Field>
+        </div>
+
+        <p className="mt-5 mb-2 text-[12px] font-bold uppercase tracking-wider text-stone-400">Photo</p>
+        <div className="grid grid-cols-4 gap-2.5">
+          {IMAGE_CHOICES.map((c) => (
+            <button
+              type="button"
+              key={c.key}
+              onClick={() => setImg(c.url)}
+              aria-pressed={img === c.url}
+              className={cn(
+                "relative rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all",
+                img === c.url ? "border-ember-500 shadow-lift scale-[1.02]" : "border-transparent opacity-70 hover:opacity-100",
+              )}
+            >
+              <img src={c.url} alt={c.label} className="w-full h-full object-cover" loading="lazy" />
+              {img === c.url && <span className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full ember-gradient text-white grid place-items-center text-[10px] font-bold">✓</span>}
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-5 mb-2 text-[12px] font-bold uppercase tracking-wider text-stone-400">Dietary tags</p>
+        <div className="flex flex-wrap gap-2">
+          {ALL_TAGS.map((t) => {
+            const on = tags.includes(t);
+            return (
+              <button
+                type="button"
+                key={t}
+                onClick={() => setTags((cur) => (on ? cur.filter((x) => x !== t) : [...cur, t]))}
+                aria-pressed={on}
+                className={cn(
+                  "px-3.5 h-9 rounded-full text-[12px] font-bold border transition-colors",
+                  on ? "ember-gradient text-white border-transparent" : "border-stone-300 dark:border-stone-700 text-stone-500 hover:border-ember-400",
+                )}
+              >
+                {t === "V" ? "Vegetarian" : t === "VG" ? "Vegan" : t === "GF" ? "Gluten-free" : "Spicy"}
+              </button>
+            );
+          })}
+        </div>
+
+        {err && <p className="mt-4 text-[12.5px] font-semibold text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3.5 py-2.5">{err}</p>}
+
+        <div className="mt-7 flex justify-end gap-3">
+          <Button type="button" variant="line" onClick={onClose}>Cancel</Button>
+          <Button type="submit"><Plus size={15} /> Publish to live menu</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -70,6 +203,7 @@ function CategorySection({ cat, loading }: { cat: Category; loading: boolean }) 
 
 function ItemRow({ item, catId }: { item: MenuItem; catId: string }) {
   const updateItem = useStore((s) => s.updateItem);
+  const removeItem = useStore((s) => s.removeItem);
   const toast = useStore((s) => s.toast);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const low = item.stock < 10;
@@ -123,6 +257,17 @@ function ItemRow({ item, catId }: { item: MenuItem; catId: string }) {
           }}
           label={`Toggle availability for ${item.name}`}
         />
+        <button
+          onClick={() => {
+            removeItem(catId, item.id);
+            toast(`${item.name} removed from the menu`, "info");
+          }}
+          aria-label={`Remove ${item.name} from the menu`}
+          title="Remove from menu"
+          className="w-9 h-9 grid place-items-center rounded-lg border border-stone-800 text-stone-600 hover:border-red-500/60 hover:text-red-400 transition-colors shrink-0"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </motion.div>
   );

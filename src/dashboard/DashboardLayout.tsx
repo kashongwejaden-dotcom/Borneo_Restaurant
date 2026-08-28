@@ -110,8 +110,8 @@ export default function DashboardLayout() {
 
         <div className="p-4">
           <div className="rounded-xl border border-stone-800 bg-stone-900/70 p-4">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ember-500">EatLocal OS</p>
-            <p className="text-[12.5px] text-stone-400 mt-1.5 leading-relaxed">Flat $99/mo · <span className="text-stone-200 font-semibold">0% per order</span>, forever.</p>
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ember-500">Borneo's plan</p>
+            <p className="text-[12.5px] text-stone-400 mt-1.5 leading-relaxed">Flat monthly fee · <span className="text-stone-200 font-semibold">0% taken per order</span>. Every franc of every ticket is yours.</p>
           </div>
           <button onClick={() => navigate("/")} className="mt-3 flex items-center gap-2 text-[12.5px] font-semibold text-stone-500 hover:text-stone-200 transition-colors px-1">
             <Store size={14} /> View public storefront
