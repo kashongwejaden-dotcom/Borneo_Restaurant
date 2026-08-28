@@ -56,6 +56,27 @@ npm run dev        # Vite dev server
 npm run build      # production build → dist/
 ```
 
+## Publish to GitHub
+
+The repo is git-ready (`.gitignore` excludes `node_modules`, `dist` and secrets).
+
+**From Qwen Coder (easiest):** Settings → **GitHub** → *Connect*, authorize with your
+GitHub account, then use the **Publish to GitHub** action to push this project to a
+new repository.
+
+**Or manually, from any terminal:**
+
+```bash
+git init
+git add .
+git commit -m "Borneo Indonesian Restaurant — EatLocal OS MVP"
+git branch -M main
+git remote add origin https://github.com/<your-username>/borneo-eatlocal.git
+git push -u origin main
+```
+
+> `.env` is ignored on purpose — only `.env.example` is committed.
+
 ## Production blueprint (Next.js 15)
 
 For the hosted product, map this MVP onto:
