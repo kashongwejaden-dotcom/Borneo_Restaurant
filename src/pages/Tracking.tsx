@@ -52,7 +52,7 @@ export default function Tracking() {
           className="flex gap-2"
           onSubmit={(e) => { e.preventDefault(); if (query.trim()) navigate(`/track/${query.trim().toUpperCase()}`); }}
         >
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ticket code · BR-1047" className="w-44 font-mono" aria-label="Ticket code" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="BR-1047" className="w-36 sm:w-44 font-mono" aria-label="Ticket code" />
           <Button type="submit" variant="dark">Find</Button>
         </form>
       </div>

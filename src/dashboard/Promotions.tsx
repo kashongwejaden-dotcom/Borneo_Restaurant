@@ -71,7 +71,7 @@ export default function Promotions() {
               />
             </div>
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Starts">
               <Input type="datetime-local" value={start} onChange={(e) => { setStart(e.target.value); setError(""); }} className="[color-scheme:dark]" />
             </Field>

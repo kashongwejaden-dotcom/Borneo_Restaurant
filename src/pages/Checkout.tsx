@@ -161,8 +161,8 @@ export default function Checkout() {
               value={channel}
               onChange={setChannel}
               options={[
-                { value: "pickup", label: <><Flame size={15} /> Pickup · ready in ~20 min</> },
-                { value: "delivery", label: <><Bike size={15} /> Delivery · +{money(2000)}</> },
+                { value: "pickup", label: <><Flame size={15} /> Pickup<span className="hidden sm:inline"> · ~20 min</span></> },
+                { value: "delivery", label: <><Bike size={15} /> Delivery<span className="hidden sm:inline"> · +{money(2000)}</span></> },
               ]}
             />
             {channel === "delivery" && (

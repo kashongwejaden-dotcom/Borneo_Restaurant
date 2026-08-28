@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+  DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -18,7 +18,10 @@ export default function MenuBuilder() {
   const reorderItems = useStore((s) => s.reorderItems);
   const toast = useStore((s) => s.toast);
   const loading = useFakeLoad(600);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
   const [creating, setCreating] = useState(false);
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -212,7 +215,7 @@ function ItemRow({ item, catId }: { item: MenuItem; catId: string }) {
     <motion.div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-3.5 sm:gap-5 px-3.5 sm:px-5 py-3.5 bg-stone-900/60", isDragging && "opacity-60 z-10 relative", !item.available && "opacity-55")}
+      className={cn("flex flex-wrap items-center gap-x-3 gap-y-3 sm:flex-nowrap sm:gap-5 px-3.5 sm:px-5 py-3.5 bg-stone-900/60", isDragging && "opacity-60 z-10 relative", !item.available && "opacity-55")}
     >
       <button {...attributes} {...listeners} aria-label={`Reorder ${item.name}`} className="cursor-grab active:cursor-grabbing text-stone-600 hover:text-stone-300 touch-none shrink-0">
         <GripVertical size={17} />
@@ -220,7 +223,7 @@ function ItemRow({ item, catId }: { item: MenuItem; catId: string }) {
 
       <img src={item.img} alt="" className={cn("w-12 h-12 rounded-lg object-cover shrink-0", !item.available && "grayscale")} />
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-40">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-bold text-[14.5px] text-white truncate">{item.name}</p>
           {item.popular && <Star size={12} className="text-ember-400 fill-ember-400 shrink-0" />}

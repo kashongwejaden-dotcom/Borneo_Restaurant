@@ -195,9 +195,9 @@ export function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-4" aria-label="Main">
         <Link to="/" className="flex items-center gap-3 group">
           <BrandMark className="w-10 h-10 transition-transform duration-300 group-hover:rotate-6" />
-          <span className="leading-none">
-            <span className="block font-display font-bold text-[19px] text-ink dark:text-stone-50">{RESTAURANT.name}</span>
-            <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mt-1">Indonesian · Kigali</span>
+          <span className="leading-none min-w-0">
+            <span className="block font-display font-bold text-[16.5px] sm:text-[19px] text-ink dark:text-stone-50 truncate">{RESTAURANT.name}</span>
+            <span className="hidden sm:block text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mt-1">Indonesian · Kigali</span>
           </span>
         </Link>
 
@@ -442,7 +442,7 @@ export function CartDrawer() {
       </div>
 
       {cart.length > 0 && (
-        <div className="border-t border-stone-200 dark:border-stone-800 px-5 py-4 shrink-0 space-y-3">
+        <div className="border-t border-stone-200 dark:border-stone-800 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 space-y-3">
           <div className="flex justify-between text-sm text-stone-500">
             <span>Subtotal</span><span className="font-semibold text-ink dark:text-stone-100">{money(total)}</span>
           </div>

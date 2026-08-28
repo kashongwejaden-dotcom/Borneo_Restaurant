@@ -204,7 +204,7 @@ export default function Home() {
               {/* floating live ticket */}
               {liveOrder && (
                 <motion.div
-                  className="absolute -bottom-6 -left-3 sm:-left-8 bg-white/85 dark:bg-stone-900/85 backdrop-blur-md rounded-xl border border-white/50 dark:border-stone-700/60 shadow-lift p-4 w-[240px] animate-float"
+                  className="hidden sm:block absolute -bottom-6 -left-3 sm:-left-8 bg-white/85 dark:bg-stone-900/85 backdrop-blur-md rounded-xl border border-white/50 dark:border-stone-700/60 shadow-lift p-4 w-[240px] animate-float"
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 22 }}
@@ -316,10 +316,10 @@ export default function Home() {
             {/* the 48-hour rendang clock */}
             <div className="mt-9">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-4">The 48-hour rendang, hour by hour</p>
-              <div className="grid grid-cols-4 gap-3 relative">
-                <span className="absolute top-[5px] left-[6%] right-[6%] h-0.5 bg-stone-200 dark:bg-stone-800" aria-hidden />
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-6 sm:gap-3 relative">
+                <span className="hidden sm:block absolute top-[5px] left-[6%] right-[6%] h-0.5 bg-stone-200 dark:bg-stone-800" aria-hidden />
                 <motion.span
-                  className="absolute top-[5px] left-[6%] h-0.5 ember-gradient"
+                  className="hidden sm:block absolute top-[5px] left-[6%] h-0.5 ember-gradient"
                   initial={{ width: 0 }}
                   whileInView={{ width: "88%" }}
                   viewport={{ once: true }}

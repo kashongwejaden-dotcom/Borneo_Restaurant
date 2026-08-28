@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  DndContext, DragOverlay, PointerSensor, useDroppable, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent,
+  DndContext, DragOverlay, PointerSensor, TouchSensor, useDroppable, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
 import { Apple, ArrowRight, Bike, Chrome, CreditCard, Flame, GripVertical, Inbox, MapPin, Phone, X } from "lucide-react";
@@ -31,7 +31,10 @@ export default function OrdersBoard() {
     return () => clearInterval(t);
   }, []);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
 
   const byStatus = useMemo(() => {
     const m: Record<OrderStatus, Order[]> = { new: [], preparing: [], ready: [], completed: [] };
