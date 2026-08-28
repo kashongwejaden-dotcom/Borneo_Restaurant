@@ -103,6 +103,7 @@ export default function MenuPage() {
                 <div className="ember-gradient text-white rounded-xl px-5 py-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold shadow-lift">
                   <Flame size={16} />
                   <span>{promo.name} is live — {promo.percent}% off your whole order, applied automatically at checkout.</span>
+                  <PromoCountdown end={promo.end} />
                 </div>
               </motion.div>
             )}
@@ -314,6 +315,25 @@ function ItemCard({ item, index, onOpen, badge }: { item: MenuItem; index: numbe
 }
 
 /* ---------------- Item detail / modifiers modal ---------------- */
+
+/* ---------------- live promo countdown chip ---------------- */
+
+function PromoCountdown({ end }: { end: number }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 15000);
+    return () => clearInterval(t);
+  }, []);
+  const ms = end - Date.now();
+  if (ms <= 0) return null;
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  return (
+    <span className="ml-auto font-mono text-[12px] font-bold bg-white/20 rounded-full px-3 py-1 tabular-nums">
+      ends in {h > 0 ? `${h}h ${m}m` : `${m}m`}
+    </span>
+  );
+}
 
 function ItemModal({ selected, onClose }: { selected: { item: MenuItem; catId: string } | null; onClose: () => void }) {
   const addToCart = useStore((s) => s.addToCart);

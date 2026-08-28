@@ -43,6 +43,40 @@
   50% { transform: translateY(-10px); }
 }
 
+/* embers drifting up from the fire */
+@keyframes emberRise {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  12% { opacity: 0.85; }
+  100% { transform: translateY(-160px) translateX(var(--drift, 10px)) scale(0.35); opacity: 0; }
+}
+.ember-spark {
+  position: absolute;
+  bottom: 8%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #fb923c;
+  box-shadow: 0 0 8px 2px rgb(249 115 22 / 0.55);
+  filter: blur(0.3px);
+  animation: emberRise 5s linear infinite;
+}
+
+/* slow Ken Burns breathing for photography */
+@keyframes kenburns {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.07) translateY(-1.5%); }
+}
+.kenburns {
+  animation: kenburns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ember-spark { display: none; }
+  .kenburns { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
 html {
   scroll-behavior: smooth;
 }

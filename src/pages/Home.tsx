@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Bike, Clock, Flame, LocateFixed, MapPin, Percent, Plus, Search, Star, UtensilsCrossed, Wallet } from "lucide-react";
@@ -6,7 +6,7 @@ import { IMG, RESTAURANT } from "../lib/seed";
 import { money, cn } from "../lib/utils";
 import { useStore } from "../lib/store";
 import { Button, Badge } from "../components/ui";
-import { OrderTicker, Reveal, SectionHead, TagChip, Footer } from "../components/shared";
+import { OrderTicker, Reveal, Scramble, SectionHead, TagChip, Footer } from "../components/shared";
 
 const REVIEWS = [
   { name: "Keza N.", time: "2 weeks ago", stars: 5, text: "The rendang is dangerously good — ordered direct and it was ready before I parked. Not a single franc wasted on app fees." },
@@ -61,6 +61,23 @@ export default function Home() {
       <section className="relative overflow-hidden grain">
         <div className="pointer-events-none absolute -top-40 -right-40 w-[640px] h-[640px] rounded-full bg-ember-500/15 blur-[140px]" aria-hidden />
         <div className="pointer-events-none absolute top-1/2 -left-52 w-[420px] h-[420px] rounded-full bg-amber-400/10 blur-[120px]" aria-hidden />
+        {/* embers drifting up from the fire */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          {[8, 19, 31, 42, 55, 63, 74, 86, 94].map((left, i) => (
+            <span
+              key={i}
+              className="ember-spark"
+              style={
+                {
+                  left: `${left}%`,
+                  animationDelay: `${i * 0.65}s`,
+                  animationDuration: `${4 + (i % 3) * 1.2}s`,
+                  "--drift": `${i % 2 ? 16 : -12}px`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-8 items-center">
           <div>
@@ -80,7 +97,7 @@ export default function Home() {
                   </svg>
                 </span>
                 <br />
-                Ordering worth the seconds.
+                <Scramble text="Ordering worth the seconds." delay={500} />
               </h1>
             </Reveal>
             <Reveal delay={0.16}>
@@ -165,12 +182,14 @@ export default function Home() {
           <Reveal delay={0.15} className="relative">
             <div className="relative">
               <div className="absolute -inset-4 ember-gradient rounded-[28px] rotate-2 opacity-20 blur-sm" aria-hidden />
-              <img
-                src={IMG.hero}
-                alt="Indonesian feast — rendang, satay and nasi goreng on a teak table"
-                className="relative rounded-[24px] w-full aspect-[4/3] object-cover shadow-lift"
-                loading="eager"
-              />
+              <div className="relative rounded-[24px] overflow-hidden shadow-lift">
+                <img
+                  src={IMG.hero}
+                  alt="Indonesian feast — rendang, satay and nasi goreng on a teak table"
+                  className="kenburns w-full aspect-[4/3] object-cover"
+                  loading="eager"
+                />
+              </div>
               {/* floating live ticket */}
               {liveOrder && (
                 <motion.div

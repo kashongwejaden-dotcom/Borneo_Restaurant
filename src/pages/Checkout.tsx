@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 import { Apple, ArrowRight, Bike, Check, Chrome, CreditCard, Flame, MapPin, ShieldCheck, ShoppingBag } from "lucide-react";
 import { cn, money, uid } from "../lib/utils";
 import { useCartTotal, useLivePromo, useStore } from "../lib/store";
@@ -37,6 +38,25 @@ export default function Checkout() {
   const deliveryFee = channel === "delivery" ? 2000 : 0;
   const tip = customTip !== "" ? Math.max(0, Number(customTip) || 0) : Math.round((subtotal * tipPct) / 100);
   const total = subtotal - discount + deliveryFee + tip;
+
+  /* celebration burst when the ticket hits the pass */
+  useEffect(() => {
+    if (!done) return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+    const fire = () =>
+      confetti({
+        particleCount: 80,
+        spread: 78,
+        origin: { y: 0.32 },
+        colors: ["#f97316", "#ea580c", "#fbbf24", "#fde68a", "#ffffff"],
+        ticks: 210,
+        scalar: 0.9,
+      });
+    fire();
+    const t = setTimeout(fire, 260);
+    return () => clearTimeout(t);
+  }, [done]);
 
   if (done) {
     return (

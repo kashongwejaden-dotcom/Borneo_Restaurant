@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -29,6 +30,13 @@ export default function DashboardLayout() {
   const lowStock = useLowStock();
   const location = useLocation();
   const navigate = useNavigate();
+
+  /* live wall clock — the kitchen runs on it */
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   if (!user || user.role !== "ADMIN") {
     return (
@@ -122,6 +130,9 @@ export default function DashboardLayout() {
                 <Wifi size={11} />
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ember-pulse" />
                 Live · SSE
+              </span>
+              <span className="hidden md:inline font-mono text-[12.5px] font-semibold text-stone-500 tabular-nums" aria-label="Current time">
+                {clock.toLocaleTimeString("en-GB", { hour12: false })}
               </span>
             </div>
 

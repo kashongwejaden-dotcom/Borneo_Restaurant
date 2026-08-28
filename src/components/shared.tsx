@@ -42,14 +42,68 @@ export function Reveal({ children, delay = 0, className }: { children: ReactNode
 }
 
 export function SectionHead({ kicker, title, right }: { kicker: string; title: string; right?: ReactNode }) {
+  const words = title.split(" ");
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
       <div>
         <p className="text-[12px] font-bold uppercase tracking-[0.22em] text-ember-600 dark:text-ember-400 mb-2.5">{kicker}</p>
-        <h2 className="font-display text-3xl sm:text-[40px] leading-[1.08] font-bold text-ink dark:text-stone-50">{title}</h2>
+        <h2 className="font-display text-3xl sm:text-[40px] leading-[1.08] font-bold text-ink dark:text-stone-50">
+          {words.map((w, i) => (
+            <span key={i} className="inline-block overflow-hidden align-bottom pb-[0.12em] -mb-[0.12em]">
+              <motion.span
+                className="inline-block"
+                initial={{ y: "112%" }}
+                whileInView={{ y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.55, delay: i * 0.055, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                {w}
+                {i < words.length - 1 ? "\u00A0" : ""}
+              </motion.span>
+            </span>
+          ))}
+        </h2>
       </div>
       {right}
     </div>
+  );
+}
+
+/* ---------------- Scramble-decode text ---------------- */
+
+export function Scramble({ text, delay = 0, className }: { text: string; delay?: number; className?: string }) {
+  const [out, setOut] = useState(text);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const chars = "◆·—#%&abcdefghikmnoprstw";
+    const totalFrames = 30;
+    let frame = 0;
+    let raf = 0;
+    const timeout = setTimeout(() => {
+      const step = () => {
+        frame += 1;
+        const reveal = Math.floor((frame / totalFrames) * text.length);
+        let s = "";
+        for (let i = 0; i < text.length; i++) {
+          if (i < reveal || text[i] === " ") s += text[i];
+          else s += chars[Math.floor(Math.random() * chars.length)];
+        }
+        setOut(s);
+        if (frame < totalFrames) raf = requestAnimationFrame(step);
+        else setOut(text);
+      };
+      raf = requestAnimationFrame(step);
+    }, delay);
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(raf);
+      setOut(text);
+    };
+  }, [text, delay]);
+  return (
+    <span className={className} aria-label={text}>
+      <span aria-hidden="true">{out}</span>
+    </span>
   );
 }
 

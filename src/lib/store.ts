@@ -169,7 +169,26 @@ export const useStore = create<Store>()(
           promoName: livePromo?.name,
           payment,
         };
-        set((s) => ({ orders: [order, ...s.orders].slice(0, 60), cart: [], cartOpen: false }));
+        const stockBefore = get().categories.flatMap((c) => c.items);
+        set((s) => ({
+          orders: [order, ...s.orders].slice(0, 60),
+          cart: [],
+          cartOpen: false,
+          // real inventory: every order drains stock; 0 units → auto-86'd off the menu
+          categories: s.categories.map((c) => ({
+            ...c,
+            items: c.items.map((i) => {
+              const bought = cart.filter((l) => l.itemId === i.id).reduce((n, l) => n + l.qty, 0);
+              if (!bought) return i;
+              const stock = Math.max(0, i.stock - bought);
+              return { ...i, stock, available: stock > 0 ? i.available : false };
+            }),
+          })),
+        }));
+        cart.forEach((l) => {
+          const it = stockBefore.find((i) => i.id === l.itemId);
+          if (it && it.stock - l.qty <= 0) get().toast(`${l.name} just sold out — 86'd from the live menu`, "info");
+        });
         return order;
       },
       setOrderStatus: (id, status) =>

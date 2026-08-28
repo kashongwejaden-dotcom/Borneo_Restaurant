@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Bike, Flame, Receipt, TrendingUp, Wallet } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Bike, Flame, Receipt, TrendingUp, Wallet, type LucideIcon } from "lucide-react";
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { CHANNEL_SPLIT, HOURLY_REVENUE, POPULAR_ITEMS } from "../lib/seed";
-import { money, timeAgo, useFakeLoad, cn } from "../lib/utils";
+import { money, timeAgo, useFakeLoad, useCountUp, cn } from "../lib/utils";
 import { useStore } from "../lib/store";
-import { Skeleton } from "../components/ui";
+import { Skeleton, Sparkline } from "../components/ui";
 
 const STATUS_TONE: Record<string, string> = {
   new: "bg-ember-500/15 text-ember-400",
@@ -31,31 +32,39 @@ export default function Overview() {
   const livePromos = promos.filter((p) => p.active).length;
 
   const metrics = [
-    { label: "Today's revenue", value: money(revenue), delta: "+18.4% vs last Tue", icon: Wallet, iconCls: "bg-ember-500/15 text-ember-400" },
-    { label: "Orders", value: String(orderCount), delta: `${orders.filter((o) => o.status === "new").length} waiting on the pass`, icon: Receipt, iconCls: "bg-amber-500/15 text-amber-400" },
-    { label: "Avg ticket", value: money(avgTicket), delta: "+FRw 1,240 this week", icon: TrendingUp, iconCls: "bg-emerald-500/15 text-emerald-400" },
-    { label: "Tips → staff", value: money(tips + 34000), delta: "100% paid out, zero skim", icon: Flame, iconCls: "bg-rose-500/15 text-rose-400" },
+    {
+      label: "Today's revenue", raw: revenue, fmt: (v: number) => money(v), delta: "+18.4% vs last Tue",
+      icon: Wallet, iconCls: "bg-ember-500/15 text-ember-400",
+      spark: [8, 11, 9, 14, 12, 17, 15, 21, 19, 24], sparkColor: "#f97316",
+    },
+    {
+      label: "Orders", raw: orderCount, fmt: (v: number) => String(Math.round(v)), delta: `${orders.filter((o) => o.status === "new").length} waiting on the pass`,
+      icon: Receipt, iconCls: "bg-amber-500/15 text-amber-400",
+      spark: [3, 5, 4, 6, 5, 8, 7, 9, 8, 11], sparkColor: "#f59e0b",
+    },
+    {
+      label: "Avg ticket", raw: avgTicket, fmt: (v: number) => money(v), delta: "+FRw 1,240 this week",
+      icon: TrendingUp, iconCls: "bg-emerald-500/15 text-emerald-400",
+      spark: [5.0, 5.2, 5.1, 5.4, 5.3, 5.6, 5.5, 5.7, 5.6, 5.8], sparkColor: "#10b981",
+    },
+    {
+      label: "Tips → staff", raw: tips + 34000, fmt: (v: number) => money(v), delta: "100% paid out, zero skim",
+      icon: Flame, iconCls: "bg-rose-500/15 text-rose-400",
+      spark: [1.0, 2.0, 1.5, 2.5, 2.0, 3.0, 2.6, 3.4, 3.0, 4.0], sparkColor: "#f43f5e",
+    },
   ];
 
   return (
     <div className="space-y-6">
       {/* metrics */}
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((m, i) => {
-          const I = m.icon;
-          return loading ? (
-            <Skeleton key={m.label} className="h-[124px]" />
+        {metrics.map((m, i) =>
+          loading ? (
+            <Skeleton key={m.label} className="h-[128px]" />
           ) : (
-            <div key={m.label} className="rounded-2xl border border-stone-800 bg-stone-900/60 p-5 hover:border-stone-700 transition-colors group" style={{ animationDelay: `${i * 60}ms` }}>
-              <div className="flex items-center justify-between">
-                <span className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-stone-500">{m.label}</span>
-                <span className={cn("w-9 h-9 rounded-lg grid place-items-center", m.iconCls)}><I size={16} /></span>
-              </div>
-              <p className="font-display text-[28px] font-bold text-white mt-3 leading-none">{m.value}</p>
-              <p className="text-[12px] text-stone-500 mt-2.5">{m.delta}</p>
-            </div>
-          );
-        })}
+            <MetricCard key={m.label} m={m} index={i} />
+          ),
+        )}
       </div>
 
       {/* charts */}
@@ -197,5 +206,45 @@ export default function Overview() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ---------------- animated metric card ---------------- */
+
+interface MetricDef {
+  label: string;
+  raw: number;
+  fmt: (v: number) => string;
+  delta: string;
+  icon: LucideIcon;
+  iconCls: string;
+  spark: number[];
+  sparkColor: string;
+}
+
+function MetricCard({ m, index }: { m: MetricDef; index: number }) {
+  const v = useCountUp(m.raw);
+  const I = m.icon;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.07, duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
+      className="rounded-2xl border border-stone-800 bg-stone-900/60 p-5 hover:border-stone-600 transition-colors group"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-stone-500">{m.label}</span>
+        <span className={cn("w-9 h-9 rounded-lg grid place-items-center transition-transform duration-300 group-hover:scale-110", m.iconCls)}>
+          <I size={16} />
+        </span>
+      </div>
+      <div className="mt-3.5 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-display text-[27px] font-bold text-white leading-none tabular-nums">{m.fmt(v)}</p>
+          <p className="text-[12px] text-stone-500 mt-2.5 truncate">{m.delta}</p>
+        </div>
+        <Sparkline data={m.spark} className="w-[88px] h-8 shrink-0 opacity-0 group-hover:opacity-90 transition-opacity duration-500" stroke={m.sparkColor} />
+      </div>
+    </motion.div>
   );
 }

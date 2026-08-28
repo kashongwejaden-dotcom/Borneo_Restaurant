@@ -54,7 +54,7 @@ export default function Reserve() {
         {/* left: ambience + info */}
         <Reveal>
           <div className="relative rounded-[24px] overflow-hidden grain lg:sticky lg:top-24">
-            <img src={IMG.interior} alt="Inside Borneo — rattan lamps and warm wood" className="w-full aspect-[4/4.4] object-cover" />
+            <img src={IMG.interior} alt="Inside Borneo — rattan lamps and warm wood" className="kenburns w-full aspect-[4/4.4] object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 to-transparent" aria-hidden />
             <div className="absolute bottom-0 inset-x-0 p-7 text-paper">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-ember-400 mb-2.5 flex items-center gap-2"><CalendarDays size={13} /> Book a table</p>

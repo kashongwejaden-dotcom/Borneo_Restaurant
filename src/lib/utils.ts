@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Promotion } from "./types";
 
 /** Merge class names, skipping falsy values. */
@@ -70,6 +70,33 @@ export function toLocalInput(ms: number) {
 
 export function fromLocalInput(v: string) {
   return new Date(v).getTime();
+}
+
+/** Animated counter — eases toward `target` whenever it changes (metrics feel alive). */
+export function useCountUp(target: number, duration = 850) {
+  const [val, setVal] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      prev.current = target;
+      setVal(target);
+      return;
+    }
+    const from = prev.current;
+    const start = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const e = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      setVal(from + (target - from) * e);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else prev.current = target;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
 }
 
 /** Simulated network latency so skeleton states are visible (like a real fetch). */

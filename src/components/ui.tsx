@@ -276,6 +276,37 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-lg bg-stone-200/80 dark:bg-stone-800", className)} />;
 }
 
+/* ---------------- Sparkline ---------------- */
+
+export function Sparkline({
+  data,
+  className,
+  stroke = "var(--color-ember-500)",
+}: {
+  data: number[];
+  className?: string;
+  stroke?: string;
+}) {
+  const w = 96;
+  const h = 30;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const pts = data
+    .map((v, i) => `${((i / (data.length - 1)) * w).toFixed(1)},${(h - 3 - ((v - min) / (max - min || 1)) * (h - 6)).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={className} aria-hidden="true">
+      <polyline points={pts} fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+      <circle
+        cx={w}
+        cy={h - 3 - ((data[data.length - 1] - min) / (max - min || 1)) * (h - 6)}
+        r="2.6"
+        fill={stroke}
+      />
+    </svg>
+  );
+}
+
 /* ---------------- Empty state ---------------- */
 
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
